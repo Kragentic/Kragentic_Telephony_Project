@@ -31,8 +31,7 @@
 		  "stdio"
 		],
 		"env": {
-		  "SLACK_MCP_XOXP_TOKEN": "xoxe.xoxp-1-Mi0yLTkyNjY2NDU4NzE2NTAtOTI2NjY0NTg3ODAwMi05MzA1OTA0NTE0Nzg1LTkzMDU5MDQ1MzEzOTMtZDg2ZGVmNmZkZGM3NmNhOThlNzNlN2FmYWVjODJlMzEyNTM0YjVkYjFjNDNlMjMwMjYyOWZkYzAxZGFjZDIwNA"
-		}
+		  "SLACK_MCP_XOXP_TOKEN": ""
 	  },
 	  "slack-xqq615-27": {
 		"url": "https://mcp.composio.dev/partner/composio/slack/mcp?customerId=787e40ec-9ed0-4917-b783-a7fec6c216c7&agent=cursor"
