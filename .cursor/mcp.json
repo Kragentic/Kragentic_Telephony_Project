@@ -13,5 +13,48 @@
             "AZURE_OPENAI_API_KEY": "YOUR_AZURE_KEY_HERE",
             "OLLAMA_API_KEY": "YOUR_OLLAMA_API_KEY_HERE"
         }
+    
+,
+
+      "context7": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@upstash/context7-mcp"
+        ]
+      },
+      "linear": {
+        "command": "cmd",
+        "args": [
+          "/c",
+          "npx",
+          "-y",
+          "@smithery/cli@latest",
+          "run",
+          "@tacticlaunch/mcp-linear",
+          "--key",
+          "dbcb836d-8478-4b34-aa2e-93a2150a8953",
+          "--config",
+          "\"{\\\"token\\\":\\\"dbcb836d-8478-4b34-aa2e-93a2150a8953\\\"}\""
+        ]
+      },
+      "slack": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "slack-mcp-server@latest",
+          "--transport",
+          "stdio"
+        ],
+        "env": {
+          "SLACK_MCP_XOXP_TOKEN": ""
+        }
+      },
+      "slack-xqq615-27": {
+        "url": "https://mcp.composio.dev/partner/composio/slack/mcp?customerId=787e40ec-9ed0-4917-b783-a7fec6c216c7&agent=cursor"
+      },
+      "linear-d0yvtv-29": {
+        "url": "https://mcp.composio.dev/partner/composio/linear/mcp?customerId=787e40ec-9ed0-4917-b783-a7fec6c216c7&agent=cursor"
+      }
     }
-}
+  }
