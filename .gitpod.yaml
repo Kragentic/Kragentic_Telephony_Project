@@ -1,0 +1,15 @@
+
+image: python:3.12
+
+tasks:
+  - init: |
+      sudo apt install python3.12-venv
+      python3 -m venv venv
+      source venv/bin/activate
+      pip install dspy
+    command: |
+      source venv/bin/activate
+      python main.py
+vscode:
+  extensions:
+    - ms-python.python
