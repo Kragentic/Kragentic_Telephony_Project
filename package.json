@@ -1,5 +1,21 @@
 {
+  "name": "trigger-ai-agent-sample",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node --enable-source-maps dist/index.js"
+  },
+  "devDependencies": {
+    "@tsconfig/strictest": "^2.0.5",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2"
+  },
   "dependencies": {
-    "task-master-ai": "^0.23.0"
+    "@ai-sdk/openai": "^2.0.9",
+    "@trigger.dev/sdk": "^3.3.17",
+    "ai": "^5.0.9"
   }
 }
