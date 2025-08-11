@@ -1,0 +1,29 @@
+image: gitpod/workspace-full-docker
+
+tasks:
+  - name: Start Docker
+    init: |
+      # Ensure gitpod user is in docker group
+      sudo adduser gitpod docker || true
+
+      # Start Docker daemon if not already running
+      if ! pgrep dockerd > /dev/null; then
+        echo "Starting Docker daemon..."
+        sudo dockerd > /tmp/dockerd.log 2>&1 &
+        sleep 5
+      fi
+
+      # Show Docker status
+      docker info || cat /tmp/dockerd.log
+
+
+# tasks:
+#   - name: Start Services
+#     init: |
+#       sudo service docker start
+#       docker run -d --restart unless-stopped \
+#         -p 8000:8000 --name surreal \
+#         surrealdb/surrealdb start --log trace --user root --pass root
+#       docker run -d --restart unless-stopped \
+#         -p 7233:7233 -p 8233:8233 --name temporal \
+#         temporalio/temporal server start-dev --ip 0.0.0.0
