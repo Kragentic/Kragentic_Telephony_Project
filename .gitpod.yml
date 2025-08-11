@@ -17,12 +17,6 @@ tasks:
       docker info || cat /tmp/dockerd.log
 
 
-
-
-
-
-
-
 # tasks:
 #   - name: Start Services
 #     init: |

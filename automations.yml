@@ -1,0 +1,18 @@
+version: "1.0"
+
+automations:
+  - name: Start SurrealDB
+    on:
+      event: postEnvironmentStart
+    actions:
+      - run: |
+          sudo docker run -d -p 8000:8000 --name surreal \
+          surrealdb/surrealdb start --log trace --user root --pass root
+
+  - name: Start Temporal Server
+    on:
+      event: postEnvironmentStart
+    actions:
+      - run: |
+          sudo docker run --rm -p 7233:7233 -p 8233:8233 \
+          temporalio/temporal server start-dev --ip 127.0.0.1

@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  surrealdb:
+    image: surrealdb/surrealdb:latest
+    container_name: surreal
+    command: start --log trace --user root --pass root
+    ports:
+      - "8000:8000"
+
+  temporal:
+    image: temporalio/temporal:latest
+    container_name: temporal
+    command: server start-dev --ip 0.0.0.0
+    ports:
+      - "7233:7233"
+      - "8233:8233"
+    depends_on:
+      - surrealdb
