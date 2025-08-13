@@ -1,19 +1,60 @@
 {
-	"mcpServers": {
-		"task-master-ai": {
-			"command": "npx",
-			"args": ["-y", "--package=task-master-ai", "task-master-ai"],
-			"env": {
-				"ANTHROPIC_API_KEY": "YOUR_ANTHROPIC_API_KEY_HERE",
-				"PERPLEXITY_API_KEY": "YOUR_PERPLEXITY_API_KEY_HERE",
-				"OPENAI_API_KEY": "YOUR_OPENAI_KEY_HERE",
-				"GOOGLE_API_KEY": "YOUR_GOOGLE_KEY_HERE",
-				"XAI_API_KEY": "YOUR_XAI_KEY_HERE",
-				"OPENROUTER_API_KEY": "YOUR_OPENROUTER_KEY_HERE",
-				"MISTRAL_API_KEY": "YOUR_MISTRAL_KEY_HERE",
-				"AZURE_OPENAI_API_KEY": "YOUR_AZURE_KEY_HERE",
-				"OLLAMA_API_KEY": "YOUR_OLLAMA_API_KEY_HERE"
-			}
-		}
-	}
-}
+    "task-master-ai": {
+        "command": "npx",
+        "args": ["-y", "--package=task-master-ai", "task-master-ai"],
+        "env": {
+            "ANTHROPIC_API_KEY": "YOUR_ANTHROPIC_API_KEY_HERE",
+            "PERPLEXITY_API_KEY": "YOUR_PERPLEXITY_API_KEY_HERE",
+            "OPENAI_API_KEY": "YOUR_OPENAI_KEY_HERE",
+            "GOOGLE_API_KEY": "YOUR_GOOGLE_KEY_HERE",
+            "XAI_API_KEY": "YOUR_XAI_KEY_HERE",
+            "OPENROUTER_API_KEY": "YOUR_OPENROUTER_KEY_HERE",
+            "MISTRAL_API_KEY": "YOUR_MISTRAL_KEY_HERE",
+            "AZURE_OPENAI_API_KEY": "YOUR_AZURE_KEY_HERE",
+            "OLLAMA_API_KEY": "YOUR_OLLAMA_API_KEY_HERE"
+        }
+    
+,
+
+      "context7": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@upstash/context7-mcp"
+        ]
+      },
+      "linear": {
+        "command": "cmd",
+        "args": [
+          "/c",
+          "npx",
+          "-y",
+          "@smithery/cli@latest",
+          "run",
+          "@tacticlaunch/mcp-linear",
+          "--key",
+          "dbcb836d-8478-4b34-aa2e-93a2150a8953",
+          "--config",
+          "\"{\\\"token\\\":\\\"dbcb836d-8478-4b34-aa2e-93a2150a8953\\\"}\""
+        ]
+      },
+      "slack": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "slack-mcp-server@latest",
+          "--transport",
+          "stdio"
+        ],
+        "env": {
+          "SLACK_MCP_XOXP_TOKEN": ""
+        }
+      },
+      "slack-xqq615-27": {
+        "url": "https://mcp.composio.dev/partner/composio/slack/mcp?customerId=787e40ec-9ed0-4917-b783-a7fec6c216c7&agent=cursor"
+      },
+      "linear-d0yvtv-29": {
+        "url": "https://mcp.composio.dev/partner/composio/linear/mcp?customerId=787e40ec-9ed0-4917-b783-a7fec6c216c7&agent=cursor"
+      }
+    }
+  }
