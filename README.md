@@ -1,43 +1,47 @@
-# Trigger.dev AI Agent Sample
+# Modular AI Communication Platform (MCP)
 
-A minimal sample that follows the Trigger.dev AI Agents overview to:
-- Extract claims from an article
-- Verify claims against recent sources (LLM-only scaffold)
-- Analyze historical context
-- Orchestrate the workflow with parallel tasks
+## Overview
 
-## Prerequisites
-- Node.js 18+
-- Environment variables for models you use (e.g. `OPENAI_API_KEY`)
+The Modular AI Communication Platform (MCP) is designed to manage inbound and outbound calls using AI-powered voice agents. It integrates with Twilio for telephony, LiveKit for real-time voice streaming, STT (Speech-to-Text), TTS (Text-to-Speech), and LLM-based conversational AI (OpenAI/Claude). The platform supports RAG (Retrieval-Augmented Generation), CAG (Conversational Augmentation), campaign logic, list management, compliance features (e.g., consent before recording), and deployment on Fly.io for scalability and resilience.
 
-## Install
+## Features
 
-```bash
-npm install --save-dev typescript tsx @tsconfig/strictest
-npm install @trigger.dev/sdk ai @ai-sdk/openai
-```
+- Inbound and outbound calls via Telnyx integration
+- Call dispatch rules with consent handling
+- Modular AI agents built with LangChain and OpenAI/Claude APIs
+- STT (Google Speech API, SpeechRecognition, or Whisper)
+- TTS (gTTS, pyttsx3, or ElevenLabs API optional)
+- Voice streaming through LiveKit
+- Compliance and consent management
+- Campaign and dispatch rules engine
+- RAG/CAG augmentation with LangChain
+- Analytics and logging
+- Deployment on Fly.io with Cloudflare for CDN, DNS, and security
 
-Set your API key(s):
+## Getting Started
 
-```bash
-export OPENAI_API_KEY=your_key_here
-```
+### Prerequisites
 
-## Run locally
+- Elixir
+- Python
+- Docker
+- Fly.io account
 
-```bash
-npm run dev
-```
+### Installation
 
-You can edit `src/index.ts` to pass your own article text.
+1. Clone the repository
+2. Install dependencies
+3. Build and run the application
 
-## Files
-- `src/tasks/extractClaims.ts`
-- `src/tasks/verifySource.ts`
-- `src/tasks/analyzeHistory.ts`
-- `src/tasks/orchestrator.ts`
-- `src/index.ts`
+### Deployment
 
-## Notes
-- The verification/history steps are LLM-powered scaffolds. Replace with real web/retrieval logic as needed.
-- See the Trigger.dev guide for deeper orchestration patterns: [AI Agents Overview](https://trigger.dev/docs/guides/ai-agents/overview).
+1. Set up Fly.io
+2. Deploy the application using the provided Dockerfile and fly.toml configuration
+
+## Contributing
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
