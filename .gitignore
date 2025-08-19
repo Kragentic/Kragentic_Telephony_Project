@@ -226,11 +226,6 @@ node_modules/
 # OS specific
 .DS_Store
 
-# Task files
-# tasks.json
-# tasks/ 
-
-
 # Node
 
 .node_modules
@@ -239,3 +234,11 @@ node_modules/
 
 
 .env.example
+
+# Task files
+# tasks.json
+# tasks/ 
+
+
+/workspaces/Kragentic_Telephony_Project/.cursor/mcp.json
+/workspaces/Kragentic_Telephony_Project/.cursor/mcp.json.backup-1755602436766

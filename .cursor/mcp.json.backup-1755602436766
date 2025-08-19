@@ -1,0 +1,23 @@
+{
+  "mcpServers":{
+  "task-master-ai": {
+      "command": "npx",
+      "args": ["-y", "--package=task-master-ai", "task-master-ai"],
+      "env": {
+          "GROQ_API_KEY": "",
+          "GOOGLE_API_KEY" :"" ,
+          "CEREBRAS_API_KEY": ""
+          
+      } , 
+
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ]
+    }
+   
+    }
+  }
+}

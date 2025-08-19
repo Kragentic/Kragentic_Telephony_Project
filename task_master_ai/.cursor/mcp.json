@@ -33,9 +33,9 @@
           "run",
           "@tacticlaunch/mcp-linear",
           "--key",
-          "dbcb836d-8478-4b34-aa2e-93a2150a8953",
+          "",
           "--config",
-          "\"{\\\"token\\\":\\\"dbcb836d-8478-4b34-aa2e-93a2150a8953\\\"}\""
+          "\"{\\\"\\\"}\""
         ]
       },
       "slack": {

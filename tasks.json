@@ -1,0 +1,552 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Initialize Elixir & Python Monorepo",
+        "description": "Create a modular monolith repository structure with Elixir umbrella app for telephony and Python service for AI orchestration",
+        "details": "Set up Elixir umbrella project with apps: telephony, core, web. Create Python service in /services/ai_orchestrator with Poetry. Add .tool-versions, Dockerfile, docker-compose.yml for local dev. Configure mix.exs with required deps: phoenix, livekit, twilio, postgrex. Python deps: langchain, openai, anthropic, google-cloud-speech, gtts, pyttsx3, elevenlabs.",
+        "testStrategy": "Verify mix deps.get and poetry install succeed. Run mix test and pytest to ensure empty test suites pass.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Setup Fly.io Infrastructure",
+        "description": "Configure Fly.io deployment with multi-region setup and autoscaling",
+        "details": "Create fly.toml with [env] vars for DATABASE_URL, SECRET_KEY_BASE, TWILIO_SID, TWILIO_TOKEN, LIVEKIT_API_KEY, LIVEKIT_SECRET, OPENAI_API_KEY, ANTHROPIC_API_KEY. Configure [http_service] with internal_port=4000, force_https=true. Add [deploy] release_command='mix ecto.migrate'. Create .github/workflows/fly.yml for CI/CD. Set up fly regions: lax, ord, fra.",
+        "testStrategy": "Deploy to fly.io staging app and verify health check passes at https://staging-app.fly.dev/health",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Setup PostgreSQL Database",
+        "description": "Create database schema for calls, contacts, campaigns, consent logs, and analytics",
+        "details": "Create migrations: create_calls_table (id, twilio_sid, direction, status, recording_url, consent_granted, inserted_at, updated_at), create_contacts_table (id, phone, name, metadata, blacklisted, inserted_at), create_campaigns_table (id, name, config, status, inserted_at), create_consent_logs_table (id, call_id, granted, timestamp), create_analytics_table (id, metric, value, date). Add indexes on twilio_sid, phone, timestamp.",
+        "testStrategy": "Run mix ecto.migrate and verify all tables exist. Seed with test data and query via psql.",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Integrate Twilio Webhooks",
+        "description": "Implement Twilio webhook handlers for inbound call events",
+        "details": "Create /api/twilio/webhook controller in Elixir. Handle /voice for inbound calls, /status for status callbacks. Parse Twilio params: CallSid, From, To, CallStatus. Return TwiML response with <Say> for greeting and <Gather> for consent. Store call record in DB with pending status. Add webhook signature validation using twilio_auth_token.",
+        "testStrategy": "Use ngrok to expose local dev. Send test webhook from Twilio console and verify 200 response with correct TwiML.",
+        "priority": "high",
+        "dependencies": [
+          1,
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Setup LiveKit Real-time Audio",
+        "description": "Configure LiveKit for real-time voice streaming between Twilio and AI agent",
+        "details": "Install livekit-server via Docker. Create livekit.yaml with keys for API key/secret. In Elixir, add livekit_ex dependency. Create LiveKit.Room module to manage audio streams. Implement token generation for participants. Create audio bridge between Twilio <Stream> and LiveKit room. Handle audio format conversion (PCM 16kHz).",
+        "testStrategy": "Use LiveKit's test client to join room. Verify audio packets flow and latency <300ms.",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Implement Consent Flow",
+        "description": "Build consent collection system with recording controls",
+        "details": "Create Consent module with ask_for_consent/1 function. Play pre-recorded message: 'This call may be recorded for quality purposes. Press 1 to consent, 2 to decline'. On keypress 1: update call record consent_granted=true, start recording via Twilio <Record>. On keypress 2: continue without recording. Log consent decision in consent_logs table. Handle timeout after 10s as implicit decline.",
+        "testStrategy": "Call Twilio number, verify prompt plays. Press 1 and check recording starts. Press 2 and verify no recording URL saved.",
+        "priority": "high",
+        "dependencies": [
+          4,
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Create STT Service",
+        "description": "Implement Speech-to-Text using Google Speech API",
+        "details": "Python service: create stt.py with GoogleSpeechClient. Config: language_code='en-US', sample_rate_hertz=16000, encoding=LINEAR16. Stream audio from LiveKit via WebRTC. Implement real-time transcription with interim results. Return transcript chunks via WebSocket to Elixir. Handle profanity filtering - if contains ['fuck', 'shit', 'bitch'], trigger blacklist flow.",
+        "testStrategy": "Send audio file with curse words. Verify transcript contains filtered text and blacklist API triggered.",
+        "priority": "high",
+        "dependencies": [
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Create TTS Service",
+        "description": "Implement Text-to-Speech with gTTS fallback and ElevenLabs option",
+        "details": "Python service: create tts.py with providers: GoogleTTS (gtts), ElevenLabsTTS. Config via env: TTS_PROVIDER, ELEVENLABS_API_KEY, ELEVENLABS_VOICE_ID. Cache generated audio in Redis with TTL=1hr. Stream audio back to LiveKit. Handle rate limiting with exponential backoff. Fallback to gTTS if ElevenLabs fails.",
+        "testStrategy": "Generate 'Hello, how can I help you?' via both providers. Verify audio plays correctly and is cached.",
+        "priority": "high",
+        "dependencies": [
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Build LangChain AI Agent",
+        "description": "Create conversational AI agent using LangChain and OpenAI",
+        "details": "Python service: create agent.py with ConversationChain. Use ChatOpenAI(model='gpt-4-turbo-preview'). System prompt: 'You are a helpful AI assistant. Be concise, friendly, and professional.' Implement memory with ConversationBufferMemory. Add tools: get_customer_info(phone), update_contact_notes. Handle max_tokens=150, temperature=0.7.",
+        "testStrategy": "Test conversation flow: 'What's your refund policy?' -> verify coherent response. Check memory persists context.",
+        "priority": "high",
+        "dependencies": [
+          7,
+          8
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Implement RAG Augmentation",
+        "description": "Add Retrieval-Augmented Generation using vector database",
+        "details": "Python service: create rag.py with Chroma vector store. Use OpenAIEmbeddings for document encoding. Store FAQ, product info, policies as documents. Implement similarity search with top_k=3. Inject retrieved context into agent prompt. Update vector store via admin API at /admin/rag/upload.",
+        "testStrategy": "Upload 'Our refund policy is 30 days'. Ask 'How long for refunds?' -> verify agent uses RAG context.",
+        "priority": "medium",
+        "dependencies": [
+          9
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "Create Contact List Manager",
+        "description": "Build system for managing contact lists and campaigns",
+        "details": "Elixir: create ContactManager context with CRUD for contacts. CSV import endpoint /api/contacts/import. Schema validation: phone (E.164 format), name, metadata JSON. Add scheduling: process_contact/2 with delay via Oban job queue. Implement retry logic: max_attempts=3, exponential backoff.",
+        "testStrategy": "Upload CSV with 100 contacts. Verify all imported correctly. Test retry after failed call.",
+        "priority": "medium",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Build Campaign Engine",
+        "description": "Implement outbound campaign system with rules",
+        "details": "Elixir: create CampaignEngine with schema: campaigns(id, name, type, config, status, schedule). Config JSON: {dial_rate: 10, retry_attempts: 3, time_window: {start: '09:00', end: '17:00'}}. Implement CampaignRunner GenServer that polls for active campaigns. Use Quantum for cron scheduling. Track metrics: attempted, connected, converted.",
+        "testStrategy": "Create test campaign with 5 contacts. Verify calls initiated at correct rate and retry logic works.",
+        "priority": "medium",
+        "dependencies": [
+          11
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Implement Blacklist System",
+        "description": "Handle profanity detection and automatic blacklisting",
+        "details": "Elixir: create Blacklist module. On STT profanity detection: immediately play 'This call is being terminated due to inappropriate language', hang up via Twilio <Hangup>. Add phone to blacklist table with reason='profanity'. Check blacklist before processing any call. Admin API to view/remove from blacklist.",
+        "testStrategy": "Call from test number, use profanity in STT. Verify call ends and number blacklisted. Try calling again - should be blocked.",
+        "priority": "medium",
+        "dependencies": [
+          7,
+          11
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Build Analytics Pipeline",
+        "description": "Create system for collecting and storing call analytics",
+        "details": "Elixir: create Analytics context. Track events: call_started, call_ended, consent_given, recording_saved, agent_handoff. Store in analytics table with JSON metadata. Implement real-time counters via GenServer. Create daily aggregation job. Metrics: total_calls, avg_duration, consent_rate, blacklist_rate.",
+        "testStrategy": "Make 10 test calls with various outcomes. Verify analytics reflect correct counts and rates.",
+        "priority": "medium",
+        "dependencies": [
+          6,
+          13
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Create Admin Dashboard",
+        "description": "Build React dashboard for system management",
+        "details": "React app in /admin with Vite. Pages: Dashboard (real-time metrics), Contacts (CRUD), Campaigns (create/edit), Analytics (charts), RAG Management (upload docs). Use Tailwind for styling, Recharts for graphs. Connect via REST API: /api/dashboard/metrics, /api/contacts, /api/campaigns. Implement role-based auth with JWT.",
+        "testStrategy": "Navigate all pages, verify data loads. Create campaign via UI and verify backend receives request.",
+        "priority": "medium",
+        "dependencies": [
+          11,
+          12,
+          14
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "Implement Human Fallback",
+        "description": "Add routing to human agents when AI fails",
+        "details": "Elixir: create FallbackRouter. Config: fallback_enabled=true, agent_webhook_url. On AI error (timeout, API failure), play 'Transferring to human agent'. Send POST to webhook with call details. Wait for agent to join LiveKit room. If no response in 30s, send to voicemail with Twilio <Record>.",
+        "testStrategy": "Simulate OpenAI API failure. Verify transfer webhook called and agent can join call.",
+        "priority": "medium",
+        "dependencies": [
+          9
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Add Security Layer",
+        "description": "Implement authentication and encryption",
+        "details": "Elixir: add Guardian for JWT auth. Create User schema with roles: admin, agent. Encrypt sensitive data: phone numbers (AES-256), recordings (server-side encryption). Add rate limiting via PlugAttack: 100 requests/minute per IP. Use Cloudflare for DDoS protection. HTTPS only with HSTS headers.",
+        "testStrategy": "Test JWT token generation/validation. Verify encrypted phone numbers can't be read in DB. Test rate limiting blocks after threshold.",
+        "priority": "medium",
+        "dependencies": [
+          15
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 18,
+        "title": "Setup Monitoring & Alerting",
+        "description": "Configure observability for production",
+        "details": "Add Telemetry events for all key operations. Integrate Sentry for error tracking. Create Grafana dashboards: call_volume, error_rate, response_time. Add Prometheus metrics: ai_response_time, stt_accuracy, tts_latency. Configure alerts: error_rate > 1%, call_drop_rate > 5%.",
+        "testStrategy": "Trigger test error and verify appears in Sentry. Check metrics appear in Grafana dashboard.",
+        "priority": "low",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 19,
+        "title": "Create API Documentation",
+        "description": "Document all public APIs with examples",
+        "details": "Use OpenAPI 3.0 spec. Document endpoints: POST /api/twilio/webhook, GET /api/contacts, POST /api/campaigns, GET /api/analytics. Include request/response examples. Generate docs via Swagger UI at /docs. Add Postman collection for testing.",
+        "testStrategy": "Import OpenAPI spec into Postman. Test all endpoints via collection runner.",
+        "priority": "low",
+        "dependencies": [
+          15
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 20,
+        "title": "Production Deployment",
+        "description": "Deploy to production with final configurations",
+        "details": "Create production fly.toml with scaled memory: memory=1024. Set secrets: flyctl secrets set from .env.prod. Run migrations: fly deploy --strategy=immediate. Configure Cloudflare DNS with A record pointing to Fly.io IP. Set up SSL certificate via Cloudflare. Enable HTTP/2 and Brotli compression.",
+        "testStrategy": "Verify https://app.yourdomain.com loads. Run end-to-end test call. Check all metrics in Grafana.",
+        "priority": "high",
+        "dependencies": [
+          17,
+          18,
+          19
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-08-19T11:40:00.239Z",
+      "updated": "2025-08-19T11:40:00.239Z",
+      "description": "Tasks for master context"
+    }
+  },
+  "modular-ai-communication-platform": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Initialize Fly.io Infrastructure",
+        "description": "Set up Fly.io application with PostgreSQL cluster, Redis for caching, and configure fly.toml for global deployment with autoscaling",
+        "details": "Create fly.toml with [http_service] concurrency=100, [vm] size=shared-cpu-1x memory=512MB. Deploy using 'fly launch --name mcp-backend --region lax --org personal'. Add PostgreSQL with 'fly postgres create --name mcp-db --region lax'. Configure secrets: TWILIO_AUTH_TOKEN, LIVEKIT_API_KEY, OPENAI_API_KEY, CLAUDE_API_KEY. Use fly.io's built-in load balancer for global routing.",
+        "testStrategy": "Verify deployment with 'fly status' shows healthy instances, test database connectivity with psql connection string",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Setup Elixir Phoenix Backend",
+        "description": "Initialize Phoenix 1.7 application with LiveView for real-time features, configure for Fly.io deployment",
+        "details": "Run 'mix phx.new mcp_backend --database postgres --live --install'. Update mix.exs: {:twilio, \"~> 0.10.0\"}, {:livekit, \"~> 0.3.0\"}, {:jason, \"~> 1.4\"}, {:cors_plug, \"~> 3.0\"}. Configure config/runtime.exs for Fly.io environment variables. Add Dockerfile with multi-stage build using elixir:1.15-alpine base image.",
+        "testStrategy": "Run 'mix test' to verify Phoenix setup, test 'fly deploy' builds successfully",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Configure Twilio Webhook Endpoints",
+        "description": "Implement Twilio webhook handlers for call status updates and incoming call notifications",
+        "details": "Create /api/twilio/webhook endpoint in router.ex. Use Twilio.RequestValidator plug to verify signatures. Handle events: 'call.initiated', 'call.completed', 'call.recording.completed'. Store call SID, from/to numbers, status in PostgreSQL. Return TwiML for call flow control. Use Tesla HTTP client for Twilio API calls.",
+        "testStrategy": "Test with ngrok for local webhook testing, verify Twilio console shows successful webhook delivery",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Integrate LiveKit for Real-time Audio",
+        "description": "Setup LiveKit server deployment on Fly.io and integrate with Elixir backend for WebRTC audio streaming",
+        "details": "Deploy LiveKit using 'fly deploy --image livekit/livekit-server:latest --region lax'. Configure with environment variables: LIVEKIT_KEYS, LIVEKIT_SECRET. Use livekit_server_sdk_elixir to generate tokens. Create RoomService module to manage audio rooms per call. Implement audio track management for AI agent and caller.",
+        "testStrategy": "Test audio connection using LiveKit's test client, verify <300ms latency with ping tests",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Implement Consent Management System",
+        "description": "Build consent tracking system with database schema and API endpoints for recording user consent decisions",
+        "details": "Create Ecto schema: ConsentLog with fields: call_sid, phone_number, consent_given (boolean), timestamp, recording_enabled (boolean). Add migration with indexes on call_sid and phone_number. Implement /api/consent endpoint to record consent decisions. Store consent logs with 7-year retention policy for compliance.",
+        "testStrategy": "Test consent recording via API, verify database entries, test consent lookup by phone number",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Setup Python AI Service",
+        "description": "Create FastAPI Python service for AI orchestration with LangChain, OpenAI/Claude integration, and STT/TTS",
+        "details": "Use Python 3.11, FastAPI 0.104.0. Requirements: langchain==0.1.0, openai==1.3.0, anthropic==0.7.0, speechrecognition==3.10.0, openai-whisper==20231117, elevenlabs==0.2.26. Deploy as separate Fly.io app 'mcp-ai-service'. Use gunicorn with uvicorn workers. Configure CORS for Elixir backend communication.",
+        "testStrategy": "Test /health endpoint returns 200, verify OpenAI API key works with test completion",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Implement STT Integration",
+        "description": "Integrate speech-to-text using OpenAI Whisper API with fallback to Google Speech API",
+        "details": "Create /api/stt endpoint in Python service. Accept audio blob (WAV/MP3), return transcribed text. Use whisper-1 model via OpenAI API. Implement retry logic with exponential backoff. Cache results in Redis with 1-hour TTL. Add Google Speech-to-Text fallback using service account JSON.",
+        "testStrategy": "Test with sample audio files, verify accuracy >95% for English, test fallback mechanism",
+        "priority": "medium",
+        "dependencies": [
+          6
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Implement TTS Integration",
+        "description": "Setup text-to-speech using OpenAI TTS with gTTS fallback for cost optimization",
+        "details": "Create /api/tts endpoint accepting text and voice parameters. Use OpenAI tts-1 model with 'alloy' voice. Implement caching in Redis with 24-hour TTL for repeated phrases. Add gTTS fallback for non-critical responses. Return audio as base64-encoded MP3.",
+        "testStrategy": "Test with various text inputs, verify natural speech output, test caching performance",
+        "priority": "medium",
+        "dependencies": [
+          6
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Build AI Agent with LangChain",
+        "description": "Create conversational AI agent using LangChain with RAG capabilities and context management",
+        "details": "Implement LangChain agent with ConversationBufferMemory. Use OpenAI GPT-4-turbo for primary model, Claude-3-sonnet as fallback. Create prompt template with system message, conversation history, and RAG context. Implement /api/chat endpoint accepting conversation_id and message. Store conversation history in PostgreSQL.",
+        "testStrategy": "Test conversation flow, verify context retention across messages, test RAG integration",
+        "priority": "medium",
+        "dependencies": [
+          6
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Implement RAG Knowledge Base",
+        "description": "Setup vector database with Pinecone for knowledge retrieval and integrate with AI agent",
+        "details": "Create Pinecone index 'mcp-knowledge' with 1536 dimensions (OpenAI embeddings). Use langchain.vectorstores.Pinecone. Implement /api/rag/upload endpoint for adding documents. Create embeddings using text-embedding-ada-002. Add similarity search with top_k=5 results. Cache embeddings in Redis.",
+        "testStrategy": "Test document upload and retrieval, verify relevant context is included in AI responses",
+        "priority": "medium",
+        "dependencies": [
+          9
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "Create Contact List Manager",
+        "description": "Build CRUD API for managing contact lists with CSV import/export and scheduling capabilities",
+        "details": "Create Ecto schema: Contact with fields: phone_number, name, status (active/inactive/blacklisted), last_called_at, call_count, consent_status. Implement /api/contacts endpoints for CRUD operations. Add CSV import with validation. Implement scheduling with Oban job queue for retry logic.",
+        "testStrategy": "Test CSV import with 1000 contacts, verify phone number validation, test scheduling accuracy",
+        "priority": "medium",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Build Campaign Management System",
+        "description": "Implement campaign creation, scheduling, and execution with retry logic and success tracking",
+        "details": "Create Ecto schema: Campaign with fields: name, status, contact_list_id, script_template, schedule_cron, retry_count, retry_delay_minutes. Implement /api/campaigns endpoints. Use Oban for background job processing. Add campaign metrics tracking: calls_attempted, calls_completed, success_rate.",
+        "testStrategy": "Test campaign creation, verify scheduled execution, test retry mechanism with failed calls",
+        "priority": "medium",
+        "dependencies": [
+          11
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Implement Profanity Filter and Blacklist",
+        "description": "Add real-time profanity detection with automatic call termination and blacklisting",
+        "details": "Create Python service /api/profanity-check endpoint using profanity-filter library. Maintain blacklist in Redis with TTL=24h. Implement in Elixir: monitor STT transcripts, if profanity detected > threshold (0.8), terminate call via Twilio, add to blacklist. Use Phoenix.PubSub for real-time updates.",
+        "testStrategy": "Test with profanity samples, verify automatic termination, check blacklist functionality",
+        "priority": "medium",
+        "dependencies": [
+          7,
+          9
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Create Call Flow Orchestrator",
+        "description": "Implement main call flow logic integrating consent, AI agent, and fallback routing",
+        "details": "Create CallFlow module in Elixir implementing state machine: :initial → :consent_check → :recording_setup → :ai_agent → :completion. Handle TwiML generation for each state. Implement timeout handling (30s for user response). Add human fallback routing via /api/transfer endpoint.",
+        "testStrategy": "Test complete call flow with various scenarios: consent granted/denied, timeout, transfer",
+        "priority": "high",
+        "dependencies": [
+          3,
+          5,
+          9
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Build Analytics Dashboard Backend",
+        "description": "Create API endpoints for analytics data with aggregation queries and real-time updates",
+        "details": "Implement /api/analytics/summary endpoint returning: total_calls, inbound_calls, outbound_calls, consent_rate, avg_call_duration. Use PostgreSQL materialized views for performance. Add /api/analytics/calls endpoint with pagination and filtering. Implement Phoenix.PubSub for real-time dashboard updates.",
+        "testStrategy": "Test aggregation accuracy with sample data, verify real-time updates via WebSocket",
+        "priority": "low",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "Create React Admin Dashboard",
+        "description": "Build responsive React dashboard with real-time call monitoring and campaign management",
+        "details": "Use React 18.2, Vite 4.0, TailwindCSS 3.3. Install: @tanstack/react-query 5.0, react-router-dom 6.8, recharts 2.8 for charts. Create components: CallMonitor, CampaignManager, ContactList, Analytics. Use Phoenix Channels for real-time updates. Deploy to Cloudflare Pages.",
+        "testStrategy": "Test responsive design on mobile/desktop, verify real-time updates, test campaign creation flow",
+        "priority": "medium",
+        "dependencies": [
+          15
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Implement Role-Based Access Control",
+        "description": "Add authentication and authorization system with JWT tokens and role-based permissions",
+        "details": "Use Pow library for Elixir authentication. Create User schema with roles: :admin, :agent, :viewer. Implement JWT tokens with 24h expiry. Add Guardian for token management. Create /api/auth endpoints for login/logout. Protect all API endpoints with role checks.",
+        "testStrategy": "Test login flow, verify role-based access to endpoints, test token expiry",
+        "priority": "medium",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 18,
+        "title": "Setup Call Recording Storage",
+        "description": "Configure secure storage for call recordings with encryption and retention policies",
+        "details": "Use AWS S3 with SSE-S3 encryption. Create S3 bucket 'mcp-recordings' with lifecycle policy: move to Glacier after 30 days, delete after 7 years. Implement presigned URLs for secure access. Store recording URLs in PostgreSQL with call metadata. Use ExAws for S3 integration.",
+        "testStrategy": "Test upload/download of recordings, verify encryption, test lifecycle policy",
+        "priority": "medium",
+        "dependencies": [
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 19,
+        "title": "Implement Health Monitoring",
+        "description": "Add health checks and monitoring for all services with alerting",
+        "details": "Create /health endpoint in Elixir returning status of: database, Redis, Twilio API, LiveKit, Python AI service. Use Prometheus metrics via Telemetry. Setup Grafana dashboard on Fly.io. Add alerting via email/SMS for critical failures. Implement circuit breaker pattern for external services.",
+        "testStrategy": "Test health endpoint returns 200, verify alerting triggers on service failure",
+        "priority": "low",
+        "dependencies": [
+          2,
+          6
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 20,
+        "title": "Security Hardening and Compliance",
+        "description": "Implement security best practices and compliance features for GDPR/CCPA",
+        "details": "Add rate limiting with Hammer library (100 req/min per IP). Implement data retention policies with automatic deletion after 7 years. Add data export endpoint /api/data-export for GDPR requests. Use Sobelow for security scanning. Implement CSP headers. Add audit logging for all data access.",
+        "testStrategy": "Run security scan with Sobelow, test rate limiting, verify data export functionality",
+        "priority": "medium",
+        "dependencies": [
+          17,
+          18
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-08-19T11:41:09.485Z",
+      "updated": "2025-08-19T11:41:09.485Z",
+      "description": "Tasks for modular-ai-communication-platform context"
+    }
+  }
+}

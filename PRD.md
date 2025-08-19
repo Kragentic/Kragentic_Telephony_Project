@@ -1,0 +1,176 @@
+# Product Requirements Document (PRD) -- Modular AI Communication Platform
+
+## 1. Overview
+
+The Modular AI Communication Platform (MCP) is designed to manage
+inbound and outbound calls using AI-powered voice agents. It integrates
+with Twilio for telephony, LiveKit for real-time voice streaming, STT
+(Speech-to-Text), TTS (Text-to-Speech), and LLM-based conversational AI
+(OpenAI/Claude). The platform supports RAG (Retrieval-Augmented
+Generation), CAG (Conversational Augmentation), campaign logic, list
+management, compliance features (e.g., consent before recording), and
+deployment on **Fly.io** for scalability and resilience.
+
+------------------------------------------------------------------------
+
+## 2. Goals and Objectives
+
+-   Provide a modular, extensible communication system.
+-   Automate call handling (inbound & outbound).
+-   Support compliance with regulations (e.g., consent for call
+    recording).
+-   Enable real-time AI-powered voice interactions.
+-   Ensure scalability and global deployment via Fly.io.
+-   Provide analytics and reporting for administrators.
+
+------------------------------------------------------------------------
+
+## 3. Key Features
+
+### 3.1 Call Handling
+
+-   Inbound and outbound calls via **Telnyx** integration.
+-   Call dispatch rules:
+    -   Pre-check if consent is required.
+    -   Ask for user consent before recording the call.
+    -   Route to AI agent or human fallback based on logic.
+    -   If Client Use Cuss Words ,, Then  Terminate The Call and Blacklist The Client.
+
+### 3.2 AI Agents
+
+-   Modular AI agents built with **LangChain** and **OpenAI/Claude
+    APIs**.
+-   STT (Google Speech API, SpeechRecognition, or Whisper).
+-   TTS (gTTS, pyttsx3, or ElevenLabs API optional).
+-   Voice streaming through **LiveKit**.
+
+### 3.3 Compliance & Consent
+
+-   AI agent prompts user for consent before recording.
+-   If declined, disable recording but continue call.
+-   Store consent logs securely.
+
+### 3.4 Campaign & Dispatch Rules
+
+-   Contact list manager with scheduling and retry rules.
+-   Campaign configuration for outbound calls.
+-   Dispatch rules engine for routing based on:
+    -   User consent
+    -   Agent availability
+    -   Priority or business logic.
+
+### 3.5 RAG/CAG Augmentation
+
+-   Knowledge-base retrieval with **LangChain**.
+-   AI responses augmented with customer-specific or domain data.
+-   Conversation history stored for context continuity.
+
+### 3.6 Analytics & Logging
+
+-   Call logs (metadata, transcripts, outcomes).
+-   Dashboard with:
+    -   Total calls (inbound/outbound)
+    -   Consent acceptance rates
+    -   Agent performance metrics
+    -   Campaign success rates
+
+### 3.7 Deployment (Fly.io)
+
+-   Modular monolith backend in **Elixir & Python** deployed on
+    **Fly.io**.
+-   Global deployment with autoscaling.
+-   Cloudflare for CDN, DNS, and security.
+
+### 3.8 Security & Privacy
+
+-   Secure storage of call recordings and transcripts.
+-   Encrypted databases for contact lists.
+-   Role-based access control for admin/operator/agent.
+
+------------------------------------------------------------------------
+
+## 4. Architecture Overview
+
+**Components:** - **Frontend:** React (Agent/Manager dashboard). -
+**Backend:** Elixir (telephony logic) + Python (AI orchestration). -
+**Telephony:** Twilio for PSTN/SIP. - **Streaming:** LiveKit for
+real-time audio. - **AI Layer:** OpenAI/Claude via LangChain for LLM. -
+**RAG Layer:** LangChain retrievers (vector DB). - **Database:**
+PostgreSQL (Fly.io-hosted). - **Deployment:** Fly.io + Cloudflare.
+
+**Flow Example (Inbound Call):** 1. Caller dials business number
+(Twilio). 2. MCP receives webhook, LiveKit starts audio stream. 3. AI
+agent answers, requests consent for recording. 4. Call routed per
+dispatch rules (AI agent, human agent, voicemail). 5. Transcript logged,
+analytics updated.
+
+------------------------------------------------------------------------
+
+## 5. User Roles
+
+-   **Administrator:** Configure system, campaigns, compliance policies.
+-   **Agent:** Handle calls (AI-assisted or manual fallback).
+-   **End-user (caller):** Customer interacting with AI/human agent.
+
+------------------------------------------------------------------------
+
+## 6. Non-Functional Requirements
+
+-   **Scalability:** Autoscale on Fly.io, global edge routing.
+-   **Reliability:** Failover routing to backup agents.
+-   **Security:** Encryption, GDPR/CCPA compliance.
+-   **Performance:** \<300ms round-trip latency for voice streaming.
+-   **Extensibility:** Plug-in architecture for AI models or rules.
+
+------------------------------------------------------------------------
+
+## 7. Future Extensions
+
+-   Multi-channel support (WhatsApp, SMS, Email).
+-   Predictive outbound dialing.
+-   Sentiment analysis & emotion detection.
+-   Advanced analytics (dashboards, BI tools).
+-   CRM integrations (HubSpot, Salesforce).
+-   Multi-language STT/TTS with dynamic translation.
+
+------------------------------------------------------------------------
+
+## 8. Success Metrics
+
+-   Call connection success rate \> 99%.
+-   Consent compliance rate = 100%.
+-   Average response latency \< 500ms.
+-   Campaign success rates (customized per use case).
+-   AI agent resolution rate vs human fallback.
+
+------------------------------------------------------------------------
+
+## 9. Risks & Mitigation
+
+-   **Telephony outages (Twilio):** Use fallback providers.
+-   **Fly.io downtime:** Multi-region deployment, Cloudflare failover.
+-   **Data privacy violations:** Strict encryption & compliance
+    monitoring.
+-   **AI inaccuracies:** Human fallback routing, RAG augmentation.
+
+------------------------------------------------------------------------
+
+## 10. Timeline (High-Level)
+
+-   **Week 1-2:** Setup infra (Fly.io, Cloudflare, Twilio, LiveKit).
+-   **Week 3-4:** Implement inbound/outbound call logic with consent
+    handling.
+-   **Week 5-6:** Integrate AI agent (STT/TTS/LLM).
+-   **Week 7-8:** Add campaign manager & dispatch rules.
+-   **Week 9-10:** Implement analytics & dashboards.
+-   **Week 11-12:** Testing, QA, security review.
+-   **Week 13:** Production deployment.
+
+------------------------------------------------------------------------
+
+## 11. Deliverables
+
+-   Working modular AI communication platform.
+-   Fly.io deployment with scaling.
+-   Admin dashboard (React).
+-   Documentation & PRD (this file).
