@@ -1,0 +1,73 @@
+name: Deploy to Fly.io
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+jobs:
+  deploy:
+    name: Deploy app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: '1.15'
+          otp-version: '26'
+          
+      - name: Restore dependencies cache
+        uses: actions/cache@v3
+        with:
+          path: kragentic_telephony/deps
+          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-
+          
+      - name: Install dependencies
+        run: |
+          cd kragentic_telephony
+          mix deps.get
+          
+      - name: Run tests
+        run: |
+          cd kragentic_telephony
+          mix test
+          
+      - name: Deploy to Fly.io
+        uses: superfly/flyctl-actions/setup-flyctl@master
+        with:
+          version: 'latest'
+          
+      - name: Deploy
+        run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: '1.15'
+          otp-version: '26'
+          
+      - name: Deploy to Staging
+        uses: superfly/flyctl-actions/setup-flyctl@master
+        with:
+          version: 'latest'
+          
+      - name: Deploy Staging
+        run: flyctl deploy --remote-only --app kragentic-telephony-staging
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
