@@ -1,5 +1,6 @@
 defmodule KragenticTelephony.Campaigns.Campaign do
   use Ecto.Schema
+  require Ecto.Schema
   import Ecto.Changeset
 
   schema "campaigns" do

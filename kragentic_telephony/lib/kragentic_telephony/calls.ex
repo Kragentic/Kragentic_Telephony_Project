@@ -1,5 +1,6 @@
 defmodule KragenticTelephony.Calls do
   import Ecto.Query, warn: false
+  require Ecto.Query
   alias KragenticTelephony.Repo
   alias KragenticTelephony.Calls.Call
 

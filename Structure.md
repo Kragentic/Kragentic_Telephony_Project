@@ -1,0 +1,56 @@
+# Project Structure
+The project is organized into the following directories and files:
+
+* kragentic_telephony
+	+ lib
+		- kragentic_telephony
+			- consent.ex
+			- calls
+				- call.ex
+			- livekit
+				- room.ex
+			- web
+				- controllers
+					- telnyx_webhook_controller.ex
+					- contact_controller.ex
+					- health_controller.ex
+					- call_controller.ex
+				- plugs
+					- telnyx_validator.ex
+				- router.ex
+	+ priv
+		- repo
+			- seeds.exs
+			- migrations
+				- 20240819130600_create_calls.exs
+				- 20240819130601_create_contacts.exs
+				- 20240819130602_create_campaigns.exs
+				- 20240819130603_create_consent_logs.exs
+				- 20240819130604_create_analytics.exs
+	+ test
+		- kragentic_telephony
+			- livekit
+				- room_test.exs
+* src
+	+ index.ts
+	+ tasks
+		- analyzeHistory.ts
+		- extractClaims.ts
+		- orchestrator.ts
+		- verifySource.ts
+* task_master_ai
+	+ .gitignore
+* database_setup_todo.md
+* DEPLOYMENT.md
+* Dockerfile
+* file.py
+* fly.toml
+* package-lock.json
+* package.json
+* PRD.md
+* README.md
+* setup_database.sh
+* tasks.json
+* telnyx_webhook_todo.md
+* tsconfig.json
+* twilio_webhook_todo.md

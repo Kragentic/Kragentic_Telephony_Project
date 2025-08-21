@@ -1,5 +1,6 @@
 defmodule KragenticTelephony.Contacts do
   import Ecto.Query, warn: false
+  require Ecto.Query
   alias KragenticTelephony.Repo
   alias KragenticTelephony.Contacts.Contact
 

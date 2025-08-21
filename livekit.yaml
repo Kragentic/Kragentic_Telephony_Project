@@ -1,0 +1,40 @@
+# LiveKit Server Configuration
+port: 7880
+bind_address: "0.0.0.0"
+
+# API Keys
+keys:
+  devkey: secret
+
+# WebRTC Configuration
+rtc:
+  use_external_ip: false
+  port_range_start: 50000
+  port_range_end: 60000
+  tcp_port: 7881
+
+# Logging
+logging:
+  level: info
+  json: false
+
+# Room Configuration
+room:
+  empty_timeout: 300
+  enable_remote_unmute: true
+  max_participants: 100
+  enabled_codecs:
+    - mime: audio/opus
+    - mime: audio/red
+    - mime: video/vp8
+    - mime: video/h264
+
+# Turn Configuration
+turn:
+  enabled: false
+
+# Webhook Configuration
+webhook:
+  api_key: webhook_key
+  urls:
+    - http://localhost:4000/api/webhooks/livekit

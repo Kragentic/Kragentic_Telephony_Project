@@ -1,5 +1,6 @@
 defmodule KragenticTelephony.Analytics.Analytic do
   use Ecto.Schema
+  require Ecto.Schema
   import Ecto.Changeset
 
   schema "analytics" do
