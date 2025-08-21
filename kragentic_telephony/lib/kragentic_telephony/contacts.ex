@@ -3,6 +3,8 @@ defmodule KragenticTelephony.Contacts do
   require Ecto.Query
   alias KragenticTelephony.Repo
   alias KragenticTelephony.Contacts.Contact
+  alias KragenticTelephony.Contacts.CsvImporter
+  alias Oban.Job
 
   def list_contacts do
     Repo.all(Contact)
@@ -31,8 +33,29 @@ defmodule KragenticTelephony.Contacts do
   end
 
   def import_contacts_from_csv(file_path) do
-    # Implementation for CSV import
-    {:ok, "CSV import functionality to be implemented"}
+    case File.read(file_path) do
+      {:ok, csv_content} ->
+        CsvImporter.import_from_csv(csv_content)
+
+      {:error, reason} ->
+        {:error, "Failed to read file: #{reason}"}
+    end
+  end
+
+  def process_contact(contact_id, delay \\ 0) do
+    contact = get_contact!(contact_id)
+
+    # Schedule the job with Oban
+    args = %{action: "process_contact", contact_id: contact_id}
+    schedule_job(args, delay)
+  end
+
+  defp schedule_job(args, delay) do
+    Job.schedule(
+      Oban.Worker,
+      args: args,
+      execute_after: delay * 1000
+    )
   end
 
   def get_contacts_by_status(status) do
