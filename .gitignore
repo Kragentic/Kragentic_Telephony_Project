@@ -235,10 +235,9 @@ node_modules/
 
 .env.example
 
+/workspaces/Kragentic_Telephony_Project/.cursor/mcp.json
+/workspaces/Kragentic_Telephony_Project/.cursor/mcp.json.backup-1755602436766
+
 # Task files
 # tasks.json
 # tasks/ 
-
-
-/workspaces/Kragentic_Telephony_Project/.cursor/mcp.json
-/workspaces/Kragentic_Telephony_Project/.cursor/mcp.json.backup-1755602436766

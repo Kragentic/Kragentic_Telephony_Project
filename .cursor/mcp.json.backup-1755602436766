@@ -4,7 +4,7 @@
       "command": "npx",
       "args": ["-y", "--package=task-master-ai", "task-master-ai"],
       "env": {
-          "GROQ_API_KEY": "",
+          "GROQ_API_KEY": "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",
           "GOOGLE_API_KEY" :"" ,
           "CEREBRAS_API_KEY": ""
           

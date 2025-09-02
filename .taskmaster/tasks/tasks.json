@@ -1,0 +1,340 @@
+{
+  "master": {
+    "tasks": [
+  {
+    "id": 1,
+    "title": "Initialize Elixir Phoenix Umbrella Project with LiveView",
+    "description": "Create a new Phoenix umbrella project named livekit_server with a web app (LiveView) and core app, configure PostgreSQL, Docker, and Fly.io deployment with release build.",
+    "details": "## Step 1: Install Compatible Versions\n- Erlang/OTP 27\n- Elixir 1.17.x\n- Phoenix ~> 1.7.12 (works with LiveView)\n\n```bash\nelixir --version\n# Elixir 1.17.x (compiled with Erlang/OTP 27)\n```\n\n## Step 2: Create Umbrella Project\n```bash\nmix new livekit_server --umbrella\ncd livekit_server\n\n# Create Phoenix Web App\nmix phx.new apps/livekit_web --live --no-mailer --no-dashboard --database postgres --app livekit_web\n\n# Create Core App\nmix new apps/livekit_core --app livekit_core\n```\n\n## Step 3: Link Apps\n- Add `livekit_core` to deps in `apps/livekit_web/mix.exs`:\n```elixir\n{:livekit_core, in_umbrella: true}\n```\n\n## Step 4: Fly.io Config\nCreate `fly.toml` in root:\n```toml\napp = \"livekit-server\"\nprimary_region = \"lax\"\n\n[build]\n  dockerfile = \"Dockerfile\"\n\n[env]\n  PHX_HOST = \"livekit-server.fly.dev\"\n  PORT = \"4000\"\n\n[http_service]\n  internal_port = 4000\n  force_https = true\n  auto_stop_machines = true\n  auto_start_machines = true\n  min_machines_running = 0\n  processes = [\"app\"]\n\n[[vm]]\n  size = \"shared-cpu-1x\"\n  memory = \"512mb\"\n```\n\n## Step 5: Dockerfile (with release build)\n```dockerfile\nFROM elixir:1.17-alpine AS build\nRUN apk add --no-cache build-base git npm python3\nWORKDIR /app\n\n# Install Hex + Rebar\nRUN mix local.hex --force && mix local.rebar --force\n\n# Copy mix files\nCOPY mix.exs mix.lock ./\nCOPY config config\n\n# Install deps\nRUN mix deps.get --only prod && mix deps.compile\n\n# Copy umbrella apps\nCOPY apps apps\n\n# Build assets and release\nRUN MIX_ENV=prod mix assets.deploy\nRUN MIX_ENV=prod mix release\n\n# Final image\nFROM alpine:3.18\nRUN apk add --no-cache libstdc++ openssl ncurses-libs\nWORKDIR /app\nCOPY --from=build /app/_build/prod/rel/livekit_server ./\nCMD [\"bin/livekit_server\", \"start\"]\n```\n\n## Step 6: Local Verification\n```bash\nmix deps.get\nmix ecto.create\nmix phx.server\n```\n\nIf DB not running:\n```bash\npg_ctl -D /usr/local/var/postgres start\n```\n",
+    "testStrategy": "Run mix phx.server locally to ensure Phoenix boots, build Docker image with docker build -t livekit-server-test ., and test Fly.io with fly deploy --build-only",
+    "priority": "high",
+    "dependencies": [],
+    "status": "pending",
+    "subtasks": []
+  },
+      {
+        "id": 2,
+        "title": "Setup Python Microservice Structure",
+        "description": "Create Python services directory with Poetry for dependency management, FastAPI for API layer, and shared utilities",
+        "details": "mkdir -p services/{ai-agent,call-handler,mcp-server}\ncd services/ai-agent && poetry init --python ^3.11\nAdd pyproject.toml with groq, livekit, crewai, langgraph, dspy dependencies",
+        "testStrategy": "Run pytest in each service, verify FastAPI health endpoints return 200",
+        "priority": "high",
+        "dependencies": [],
+        "status": "in-progress",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Configure LiveKit SIP Trunk Integration",
+        "description": "Setup LiveKit server with Telnyx SIP trunk configuration, create room templates for inbound/outbound calls",
+        "details": "Deploy LiveKit server on Fly.io with docker-compose.yml\nConfigure Telnyx SIP trunk with webhook endpoints at /webhooks/telnyx\nCreate room templates: inbound-call, outbound-dialer, multi-agent",
+        "testStrategy": "Use LiveKit CLI to create test room, verify SIP registration with Telnyx, make test call",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Design PostgreSQL Schema for Core Entities",
+        "description": "Create Ecto migrations for leads, customers, calls, recordings, consents, campaigns, agent_profiles",
+        "details": "Create migrations:\n- leads (id, source, status, inserted_at)\n- customers (id, lead_id, converted_at)\n- calls (id, lead_id, direction, started_at, ended_at, recording_url)\n- consents (id, call_id, granted, timestamp)\n- agent_profiles (id, name, system_prompt, tools_config)",
+        "testStrategy": "Run mix ecto.migrate, verify schema with mix ecto.dump, test with Repo.all queries",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Implement Call Recording Consent Flow",
+        "description": "Build consent prompt system with TwiML-like response, store consent decisions in database",
+        "details": "Create LiveView component for consent UI\nImplement consent webhook handler:\n```elixir\ndef handle_consent(call_id, granted) do\n  %Consent{call_id: call_id, granted: granted}\n  |> Repo.insert()\nend\n```",
+        "testStrategy": "Test consent flow with LiveView tests, verify consent records in database, test denied consent path",
+        "priority": "high",
+        "dependencies": [
+          3,
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Create AI Agent Profile System",
+        "description": "Implement 4 agent profiles with configurable LLM backends, system prompts, and tool access",
+        "details": "Create AgentProfile schema with fields: name, system_prompt, llm_config, tools\nSeed data:\n- Professional: formal tone, empathy tools\n- Sales: objection handling, persuasive language\n- Friendly: casual, approachable\n- Efficient: minimal responses, task-focused",
+        "testStrategy": "Test profile switching via API, verify different system prompts used, test tool access per profile",
+        "priority": "medium",
+        "dependencies": [
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Build Groq LLM Integration Service",
+        "description": "Create Python service to handle Groq API calls for LLM, TTS, STT with caching and rate limiting",
+        "details": "services/ai-agent/src/llm.py:\n```python\nclass GroqClient:\n    def __init__(self, api_key):\n        self.client = Groq(api_key=api_key)\n    \n    async def chat(self, messages, model='llama3-70b'):\n        return await self.client.chat.completions.create(...)\n```",
+        "testStrategy": "Mock Groq API responses, test rate limiting, verify TTS/STT audio quality",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Implement Twenty CRM Integration",
+        "description": "Build API client for Twenty CRM with lead creation, update, and search functionality",
+        "details": "Create TwentyClient module:\n```elixir\ndefmodule TwentyClient do\n  def create_lead(attrs) do\n    post(\"/people\", attrs)\n  end\n  \n  def search_leads(query) do\n    get(\"/people?search=#{query}\")\n  end\nend\n```",
+        "testStrategy": "Use Twenty CRM sandbox API, test lead creation/updates, verify webhook handling",
+        "priority": "medium",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Create HouseCall Pro MCP Server",
+        "description": "Build read-only MCP server for HouseCall Pro with appointment and customer lookup endpoints",
+        "details": "services/mcp-server/src/main.py:\n```python\n@app.get('/appointments')\nasync def get_appointments(customer_id: str):\n    return await hcp_client.get_appointments(customer_id)\n```",
+        "testStrategy": "Test with HCP sandbox, verify appointment data format, test error handling",
+        "priority": "medium",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Build Mautic Campaign Integration",
+        "description": "Integrate Mautic API for email/SMS campaigns with contact synchronization",
+        "details": "Create MauticClient with endpoints:\n- create_contact/1\n- add_to_campaign/2\n- send_email/2\n- track_sms/2",
+        "testStrategy": "Test campaign creation, contact sync, verify email delivery via Mautic logs",
+        "priority": "medium",
+        "dependencies": [
+          8
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "Implement Inbound Call Handler",
+        "description": "Build LiveKit agent for handling inbound calls with AI agent selection and CRM lookup",
+        "details": "services/ai-agent/src/inbound_handler.py:\n```python\nclass InboundHandler:\n    async def handle_call(self, room):\n        lead = await self.lookup_lead(room.phone_number)\n        agent = await self.select_agent(lead)\n        await agent.conduct_call(room)\n```",
+        "testStrategy": "Simulate inbound call, verify CRM lookup, test agent selection logic",
+        "priority": "high",
+        "dependencies": [
+          3,
+          7,
+          8
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Create Outbound Dialer Service",
+        "description": "Build automated outbound dialer with appointment setting and lead qualification",
+        "details": "services/ai-agent/src/dialer.py:\n```python\nclass OutboundDialer:\n    async def start_campaign(self, leads, agent_profile):\n        for lead in leads:\n            await self.dial_lead(lead, agent_profile)\n```",
+        "testStrategy": "Test dialer with test leads, verify call initiation, test appointment booking flow",
+        "priority": "medium",
+        "dependencies": [
+          7,
+          11
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Build Chatbot Web Widget",
+        "description": "Create embeddable chatbot widget for websites with AI agent integration",
+        "details": "assets/js/chat-widget.js:\n```javascript\nclass MCPChat {\n  constructor(config) {\n    this.agent = config.agent_profile;\n    this.init();\n  }\n}\n```",
+        "testStrategy": "Test widget embedding on test site, verify AI responses, test lead capture",
+        "priority": "medium",
+        "dependencies": [
+          6,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Implement Call Disposition System",
+        "description": "Build system for tracking call outcomes with predefined dispositions and auto-summaries",
+        "details": "Create Disposition schema with enum: appointment_set, callback, not_interested, dnc\nAuto-generate summary using LLM:\n```elixir\nsummary = LLM.summarize_call(transcript)\n```",
+        "testStrategy": "Test disposition tracking, verify summary generation, test sentiment analysis",
+        "priority": "medium",
+        "dependencies": [
+          4,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Create Catalog & Pricing Engine",
+        "description": "Build service for managing service catalog with region-based pricing and add-ons",
+        "details": "Create Catalog schema:\n- services (id, name, base_price)\n- regions (id, name, multiplier)\n- add_ons (id, name, price)\n- pricing_rules (service_id, region_id, final_price)",
+        "testStrategy": "Test price calculation for different regions, verify add-on pricing, test discount rules",
+        "priority": "low",
+        "dependencies": [
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "Setup ClickHouse for Analytics",
+        "description": "Configure ClickHouse for high-performance analytics with Cube.js integration",
+        "details": "docker-compose.yml:\n```yaml\nclickhouse:\n  image: clickhouse/clickhouse-server\n  volumes:\n    - ./clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql\n```",
+        "testStrategy": "Test ClickHouse connection, verify schema creation, test query performance",
+        "priority": "medium",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Build Lead Heatmap Generator",
+        "description": "Create service to generate geographic heatmaps from lead data using zip codes",
+        "details": "services/analytics/src/heatmap.py:\n```python\nclass HeatmapGenerator:\n    def generate(self, leads):\n        coords = [self.geocode(lead.zip) for lead in leads]\n        return self.create_heatmap(coords)\n```",
+        "testStrategy": "Test with sample lead data, verify heatmap generation, test zoom levels",
+        "priority": "low",
+        "dependencies": [
+          16
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 18,
+        "title": "Implement RAG Knowledge Base",
+        "description": "Build retrieval-augmented generation system for domain knowledge",
+        "details": "services/ai-agent/src/rag.py:\n```python\nclass RAGSystem:\n    def __init__(self):\n        self.vector_store = Chroma()\n        self.retriever = self.vector_store.as_retriever()\n```",
+        "testStrategy": "Test knowledge retrieval accuracy, verify context injection, test response quality",
+        "priority": "medium",
+        "dependencies": [
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 19,
+        "title": "Create CAG Conversation Memory",
+        "description": "Implement conversational augmented generation for contextual memory across turns",
+        "details": "services/ai-agent/src/cag.py:\n```python\nclass CAGMemory:\n    def store_context(self, session_id, context):\n        self.redis.set(f'cag:{session_id}', context)\n    \n    def get_context(self, session_id):\n        return self.redis.get(f'cag:{session_id}')\n```",
+        "testStrategy": "Test context persistence, verify memory across sessions, test context limits",
+        "priority": "medium",
+        "dependencies": [
+          18
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 20,
+        "title": "Build Admin BI Dashboard",
+        "description": "Create admin portal with Cube.js integration for advanced analytics and reporting",
+        "details": "lib/mcp_web/live/admin/dashboard_live.ex:\n```elixir\ndefmodule DashboardLive do\n  use Phoenix.LiveView\n  \n  def mount(_params, _session, socket) do\n    {:ok, assign(socket, metrics: Cube.query(\"SELECT * FROM calls\"))}\n  end\nend\n```",
+        "testStrategy": "Test dashboard loading, verify Cube.js queries, test real-time updates",
+        "priority": "medium",
+        "dependencies": [
+          16
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 21,
+        "title": "Implement YAML Script Versioning",
+        "description": "Build system for loading and versioning call flow scripts from YAML files",
+        "details": "services/ai-agent/src/scripts.py:\n```python\nclass ScriptManager:\n    def load_script(self, name, version):\n        with open(f'scripts/{name}_v{version}.yaml') as f:\n            return yaml.safe_load(f)\n```",
+        "testStrategy": "Test script loading, verify version switching, test hot reload",
+        "priority": "low",
+        "dependencies": [
+          11
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 22,
+        "title": "Setup Dspy for AI Testing",
+        "description": "Configure Dspy for debugging and testing LLM workflows and agent behaviors",
+        "details": "services/ai-agent/tests/test_agents.py:\n```python\nimport dspy\n\nclass TestAgent(dspy.Module):\n    def __init__(self):\n        super().__init__()\n        self.agent = MyAgent()\n```",
+        "testStrategy": "Run dspy test suite, verify agent behavior, test prompt optimization",
+        "priority": "medium",
+        "dependencies": [
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 23,
+        "title": "Implement Multi-language Support",
+        "description": "Add internationalization support for top 10 languages in AI agents and UI",
+        "details": "Add gettext to Phoenix:\n```elixir\nconfig :mcp, MCPWeb.Gettext, default_locale: \"en\"\n```\nConfigure Groq for multilingual TTS/STT",
+        "testStrategy": "Test language switching, verify translations, test TTS quality per language",
+        "priority": "low",
+        "dependencies": [
+          7,
+          13
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 24,
+        "title": "Build Advanced Compliance Module",
+        "description": "Implement GDPR, HIPAA, and state-by-state consent compliance rules",
+        "details": "Create ComplianceEngine:\n```elixir\ndefmodule ComplianceEngine do\n  def check_consent(call, location) do\n    case location do\n      \"CA\" -> check_ca_consent(call)\n      \"EU\" -> check_gdpr_consent(call)\n    end\n  end\nend\n```",
+        "testStrategy": "Test consent rules per region, verify data retention policies, test right to deletion",
+        "priority": "medium",
+        "dependencies": [
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 25,
+        "title": "Setup Temporal Workflow Orchestration",
+        "description": "Configure Temporal for advanced job scheduling and workflow management",
+        "details": "services/workflows/src/temporal.py:\n```python\n@workflow.defn\nclass CampaignWorkflow:\n    @workflow.run\n    async def run(self, campaign_id):\n        await self.schedule_calls(campaign_id)\n        await self.track_results(campaign_id)\n```",
+        "testStrategy": "Test workflow execution, verify retries, test campaign scheduling",
+        "priority": "low",
+        "dependencies": [
+          12
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-09-01T11:43:37.110Z",
+      "updated": "2025-09-01T13:22:10.542Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

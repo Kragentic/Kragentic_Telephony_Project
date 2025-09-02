@@ -17,6 +17,11 @@
     "@ai-sdk/openai": "^2.0.9",
     "@trigger.dev/sdk": "^3.3.17",
     "ai": "^5.0.9",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.540.0",
+    "tailwind-variants": "^2.1.0",
+    "tailwindcss": "^4.1.12",
     "task-master-ai": "^0.24.0"
   }
 }

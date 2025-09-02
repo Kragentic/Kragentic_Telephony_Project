@@ -1,0 +1,209 @@
+# Product Requirements Document (PRD)
+
+## Project: Modular AI-Powered Communication Platform (MCP)
+
+---
+
+## 1. Overview
+
+The **Modular Communication Platform (MCP)** is designed to handle AI-driven inbound and outbound voice and chat conversations with modular extensibility, compliance, and scalability. It integrates **AI agents, CRM, campaigns, call recording, BI/analytics, and workflows**. The platform will support real-time AI voice/chat flows, CRM integration, marketing automation, BI dashboards, and multi-location management for clients.
+
+Deployment will be on **Fly.io** (multi-region, high availability). The frontend portal will be client-facing (with calls, leads, CRM, campaigns), and an internal admin portal will support BI, analytics, and system-wide management.
+
+> **Note**: Client sometimes refers to **Twenty CRM** and **Mautic** with misspellings — always interpret them as these platforms. All fuzzy inputs for CRM/Mautic will be normalized at the AI/NLU layer.
+
+---
+
+## 2. Goals
+
+- Build an **AI-first communication system** capable of real-time calls and chats.
+- Provide **compliance-ready call recording and consent handling**.
+- Enable **lead-to-customer lifecycle management** with CRM.
+- Deliver **campaign management (Email, SMS, WhatsApp, Messenger, RCS, iMessage)**.
+- Ensure modular scaling for **multi-location, multi-client use cases**.
+- Provide **choice of AI agent profiles** for clients (different conversational styles/strategies).
+- Use **Dspy** for debugging, testing, and validating both:
+  - LLM-based **AI agents** (voice/chat).
+  - LLM-based **developer workflows** (prompt evaluation, code generation).
+- Use **Groq** models (LLM, TTS, STT) in testing phase.
+- **UI layer** will be built with **Phoenix LiveView (Elixir framework)**.
+
+---
+
+## 3. Core Features
+
+### Inbound & Outbound Calling
+
+- **LiveKit + Telnyx SIP trunk integration** for real-time voice.
+- Inbound call handling with **AI agents**.
+- Outbound dialer (AI-led appointment setting, lead qualification).
+- Support for **multi-agent roles** in a single call:
+  - Lead qualification (with sub-roles: address verification, objection handling, FAQs).
+  - Appointment setting.
+  - Customer service.
+- **POC Integration**: LiveKit → Python Agents (Groq LLM) → Elixir bridge with tool inspection.
+
+### Chatbots & Conversations
+
+- AI chatbots embedded in **website, Yelp, Google Local Ads, Facebook forms**.
+- Shared knowledge base across **calls, chat, email, SMS**.
+- Support for **objection handling & FAQ responses**.
+- Dispositions (appointment set, callback, not interested, DNC, etc.).
+
+### AI Agent Profiles (New Feature)
+
+- The platform will offer **4 distinct AI agent profiles** in the UI.
+- Clients can select one of the profiles before making calls or launching chats.
+- Each profile is backed by a different **LLM configuration/persona**:
+  - **Profile 1: Professional/Polite Agent** – empathetic, formal tone.
+  - **Profile 2: Sales-Oriented Agent** – persuasive, objection-handling focused.
+  - **Profile 3: Friendly/Conversational Agent** – casual, approachable tone.
+  - **Profile 4: Efficient/Task-Focused Agent** – fast, minimal, straight to the point.
+- LLM backends are configured with different **system prompts, toolsets, and styles** to enable these personas.
+- Agents share the same underlying knowledge base (CRM, catalog, campaigns) but differ in **delivery style and strategy**.
+
+### Call Recording & Consent Flow
+
+1. Caller receives consent prompt.
+2. If consent given → record + store.
+3. If denied → proceed without recording.
+4. Log all consent decisions (compliance).
+
+### Call Dispositions & Summaries
+
+- Auto-generated **summaries, labels, and sentiment**.
+- **Disposition tracking**: appointment, callback, not interested, DNC.
+- Positive/Negative/Neutral grouping.
+- Stored in **Postgres** for structured retrieval.
+
+### CRM & Leads
+
+- Integration with **Twenty CRM** (individuals, not companies).
+- Leads lifecycle:
+  - Source: Google Ads, Yelp, Website forms, Facebook instant forms.
+  - Convert to **Customer** on appointment + payment.
+- **HouseCall Pro (HCP) MCP Server POC**:
+  - Read-only integration at first (appointments, customers lookup).
+  - Later: booking, updating jobs, cancellations.
+  - MCP server acts as modular service layer (agents don't call HCP directly).
+
+### Campaigns
+
+- **Mautic integration** for email & SMS campaigns.
+- **WhatsApp, Messenger, iMessage, RCS** planned for omnichannel support.
+- Chatbot auto-replies to campaign responses.
+- Campaign attribution to leads/customers.
+
+### Catalog & Pricing
+
+- Catalog of services (cleaning types, add-ons).
+- Region-based pricing (e.g., Texas \$70/hr, California \$80/hr for 2 people).
+- Add-ons (garage, oven, refrigerator, windows, etc.).
+
+### Mapping & Analytics
+
+- Lead heatmap by **zip code / service area**.
+- Distinguish **inbound calls, web leads, chat leads**.
+- Appointments and conversions tracked geographically.
+- Internal BI (admin portal) → deeper reporting with ClickHouse + **Cube.js** for BI data modeling and dashboarding.
+- Graph visualizations of call flows, leads, and CRM pipelines using **graph libraries** (for reporting & agent journey tracking).
+
+### Advanced Features
+
+- **RAG (Retrieval-Augmented Generation)** for domain knowledge.
+- **CAG (Conversational Augmented Generation)** for contextual memory in conversations.
+- **Multi-language support** for global scalability.
+- **Temporal workflows** for job orchestration and scheduling.
+- **Script versioning in YAML** for runtime loading and objection handling.
+- **Objection handling tool** (via SGLang or similar LLM agent module).
+- **Advanced compliance modules** for GDPR, HIPAA, and multi-region consent rules.
+- **BI dashboards** for performance, sentiment, pipeline analytics (via Cube.js).
+
+---
+
+## 4. Deployment Strategy (Fly.io)
+
+- **App Hosting**: Elixir (monolith, LiveView UI) + Python services.
+- **Multi-Region Scaling**: Deploy close to customer locations.
+- **Load Balancing**: Automatic via Fly.io.
+- **Failover Support**: Health checks + auto-restart.
+
+---
+
+## 5. Tech Stack
+
+- **Backend**: Elixir (core, SIP, modular monolith) + Python microservices.
+- **Frontend/UI**: Phoenix LiveView (primary framework).
+- **AI Models**: Groq (LLM, TTS, STT), CrewAI for orchestration, LangGraph for conversation turns, SGLang for objection handling.
+- **Debugging & Testing**: Dspy for LLM workflows.
+- **Storage**: PostgreSQL (metadata, CRM, dispositions) + ClickHouse (analytics) + S3 (recordings).
+- **BI Tools**: **Cube.js** for analytics + graph libraries for visual reporting.
+- **Workflow Orchestration**: Temporal.
+- **Deployment**: Fly.io + Cloudflare edge.
+
+---
+
+## 6. Timeline & Phased Rollout
+
+### Phase 1 (by Sept 5th) – MVP
+
+- Inbound + outbound calls working (POC pipeline LiveKit → Groq → Elixir).
+- Call recording + consent.
+- CRM lead capture (basic).
+- Chatbot on client website.
+- HouseCall Pro integration (read-only MCP server tools).
+- Basic **AI agent profile switching UI** with 2 sample personas.
+
+### Phase 2 (Sept 8–12)
+
+- Appointment booking via Housecall Pro (write operations).
+- Campaigns (Email/SMS via Mautic).
+- Call summaries + dispositions.
+- Frontend portal in **LiveView** (calls, leads, customers, catalog).
+- Full rollout of **4 AI agent profiles**.
+
+### Phase 3 (Sept 15–22)
+
+- Analytics (heatmap, lead mapping, sentiment).
+- Multi-agent flows (lead qualification → appointment → FAQ).
+- Testing with Dspy across AI workflows.
+- BI functions in admin portal via **Cube.js** and graph visualizations.
+- YAML script management for call flows.
+- RAG + CAG integration in workflows.
+
+### Phase 4 (Post-Sept 22)
+
+- Multi-region scaling.
+- Full CRM sync.
+- Omnichannel expansion (Messenger, WhatsApp, RCS, iMessage).
+- Advanced compliance modules.
+- Multi-language support.
+- Temporal orchestration for advanced workflows.
+
+---
+
+## 7. Compliance
+
+- Consent storage (timestamp, user response).
+- GDPR & HIPAA readiness.
+- Dual-party consent compliance (for U.S. states).
+- Advanced compliance: state-by-state and country-by-country logic.
+
+---
+
+## 8. Success Metrics
+
+- 99.9% uptime on Fly.io.
+- 95%+ successful call connection.
+- Consent logged for 100% calls.
+- <200ms latency in voice streams.
+- AI correctly handles 80%+ objections without human fallback.
+- Scale to 10K+ concurrent calls.
+- Multi-language coverage for top 10 languages.
+- **Client adoption of AI agent profiles** (at least 3 of 4 used actively).
+
+---
+
+**Author**: Maninder Singh\
+**Date**: August 2025\
+**Version**: 3.1 (Full scope with AI Agent Profiles in UI + FE + BE + LiveView UI + HouseCall Pro POC + LiveKit POC + Dspy + Cube.js/Graph BI + RAG + CAG + Temporal + Multi-language + Advanced compliance)

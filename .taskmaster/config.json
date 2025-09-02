@@ -8,7 +8,7 @@
     },
     "research": {
       "provider": "groq",
-      "modelId": "qwen-qwq-32b-preview",
+      "modelId": "llama-4-maverick",
       "maxTokens": 32768,
       "temperature": 0.1
     },
