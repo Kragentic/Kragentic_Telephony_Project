@@ -1,0 +1,9 @@
+image:
+  file: .gitpod.Dockerfile
+
+tasks:
+  - name: Setup Elixir
+    init: |
+      source ~/.asdf/asdf.sh
+      elixir -v
+      erl -version
