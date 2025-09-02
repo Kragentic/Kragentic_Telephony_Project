@@ -241,3 +241,7 @@ node_modules/
 # Task files
 # tasks.json
 # tasks/ 
+
+/workspaces/Kragentic_Telephony_Project/.cursor/mcp.json
+/workspaces/Kragentic_Telephony_Project/.taskmaster/config.json
+/workspaces/Kragentic_Telephony_Project/.taskmaster/tasks/tasks.json
