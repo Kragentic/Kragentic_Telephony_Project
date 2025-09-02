@@ -2,13 +2,13 @@ import Config
 
 # Configure your database
 config :livekit_web, LivekitWeb.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "livekit_web_dev",
-  stacktrace: true,
-  show_sensitive_data_on_connection_error: true,
-  pool_size: 10
+ username: "postgres",
+ password: "root",
+ hostname: "localhost",
+ database: "livekitdb",
+ stacktrace: true,
+ show_sensitive_data_on_connection_error: true,
+ pool_size: 10
 
 # For development, we disable any cache and enable
 # debugging and code reloading.
